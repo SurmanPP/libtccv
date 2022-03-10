@@ -1,4 +1,4 @@
-module libtcc
+module libtccv
 
 #flag -ltcc -dl
 #include "libtcc.h"
@@ -169,7 +169,7 @@ pub fn (state &C.TCCState) add_include_path(path string) {
 	C.tcc_add_include_path(state, &char(path.str))
 }
 
-pub fn (mut state C.TCCState) add_sysinclude_path(pathname string) {
+pub fn (state &C.TCCState) add_sysinclude_path(pathname string) {
 	C.tcc_add_sysinclude_path(state, &char(pathname.str))
 }
 
@@ -217,6 +217,7 @@ pub fn (state &C.TCCState) output_file(name string) ? {
 	}
 }
 
+[deprecated: 'Does not work! Use get_symbol() instead']
 pub fn (state &C.TCCState) run(argv []string) int {
 	mut argvc := []&char{cap: argv.len}
 	for arg in argv {
