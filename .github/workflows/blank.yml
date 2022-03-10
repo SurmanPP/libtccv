@@ -32,4 +32,4 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Run test
-        run: : v -cc gcc test .
+        run: v -cc gcc test .
