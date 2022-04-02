@@ -8,17 +8,21 @@ Example usage:
 module main
 import libtccv
 
+type MainFun = fn (int, &&char) int
 
 fn main() {
 	mut tcc := libtccv.new()
 	tcc.set_output_type(.memory)
-	tcc.compile_string('#include<stdio.h> int main2(int argc, char *argv[]) { printf("Hello World!"); return 0; }') or {
+	tcc.compile_string('#include<stdio.h>
+			    int main2(int argc, char *argv[]) {
+				printf("Hello World!");
+				return 0;
+			    }') or {
 		panic(err)
 	}
 	tcc.relocate() or { 
 		panic(err) 
   	}
-	// Print exit code of the C function
 	fun := MainFun(tcc.get_symbol('main2') or { panic(err) })
 	fun(0, libtccv.v_to_cstringarray([]))
 }
