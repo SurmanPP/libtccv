@@ -4,22 +4,28 @@ module libtccv
 #include "libtcc.h"
 
 [typedef]
-pub struct C.TCCState {
+struct C.TCCState {
 }
+
+// struct TCCState;
+//
+// typedef struct TCCState TCCState;
 
 type ErrorFun = fn (voidptr, &char)
 
-// create a new TCC compilation context //
+// typedef void (*TCCErrorFunc)(void *opaque, const char *msg);
+
+// create a new TCC compilation context
 fn C.tcc_new() &C.TCCState
 
 // TCCState *tcc_new(void);
 
-// free a TCC compilation context //
+// free a TCC compilation context
 fn C.tcc_delete(&C.TCCState)
 
 // void tcc_delete(TCCState *s);
 
-// set CONFIG_TCCDIR at runtime //
+// set CONFIG_TCCDIR at runtime
 fn C.tcc_set_lib_path(state &C.TCCState, const_path &char)
 
 // void tcc_set_lib_path(TCCState *s, const char *path);
@@ -39,7 +45,7 @@ fn C.tcc_get_error_opaque(&C.TCCState) voidptr
 
 // void *tcc_get_error_opaque(TCCState *s);
 
-// set options as from command line (multiple supported) //
+// set options as from command line (multiple supported)
 fn C.tcc_set_options(state &C.TCCState, const_str &char)
 
 // void tcc_set_options(TCCState *s, const char *str);
@@ -75,14 +81,14 @@ fn C.tcc_compile_string(state &C.TCCState, const_buf &char) int
 // int tcc_compile_string(TCCState *s, const char *buf);
 
 // set output type. MUST BE CALLED before any compilation
-fn C.tcc_set_output_type(&C.TCCState, int) int
-
-// int tcc_set_output_type(TCCState *s, int output_type);
 // 1 output will be run in memory (default)
 // 2 executable file
 // 3 dynamic library
 // 4 object file
 // 5 only preprocess (used internally)
+fn C.tcc_set_output_type(&C.TCCState, int) int
+
+// int tcc_set_output_type(TCCState *s, int output_type);
 
 // equivalent to -Lpath option
 fn C.tcc_add_library_path(state &C.TCCState, const_pathname &char) int
@@ -110,15 +116,14 @@ fn C.tcc_run(&C.TCCState, int, &&char) int
 // int tcc_run(TCCState *s, int argc, char **argv);
 
 // do all relocations (needed before using tcc_get_symbol())
+// possible values for 'ptr':
+//   - voidptr(1)		: Allocate and manage memory internally
+//   - none			: return required memory size for the step below
+//   - memory address	: copy code to memory passed by the caller
+//   returns -1 if error.
 fn C.tcc_relocate(&C.TCCState, voidptr) int
 
 // int tcc_relocate(TCCState *s1, void *ptr);
-/*
-possible values for 'ptr':
-   - voidptr(1)		: Allocate and manage memory internally
-   - none			: return required memory size for the step below
-   - memory address	: copy code to memory passed by the caller
-   returns -1 if error.*/
 
 // return symbol value or NULL if not found
 fn C.tcc_get_symbol(state &C.TCCState, const_name &char) voidptr
@@ -128,12 +133,15 @@ fn C.tcc_get_symbol(state &C.TCCState, const_name &char) voidptr
 // return symbol value or NULL if not found
 fn C.tcc_list_symbols(&C.TCCState, voidptr, fn (voidptr, &char, voidptr))
 
+// void tcc_list_symbols(TCCState *s, void *ctx,
+//    void (*symbol_cb)(void *ctx, const char *name, const void *val));
+
 pub enum OutputType {
-	memory = 1
-	executable = 2
-	dynamic = 3
-	object = 4
-	preprocess = 5
+	memory = 1 // output will be run in memory
+	executable = 2 // executeable file
+	dynamic = 3 // dynamic library
+	object = 4 // object file
+	preprocess = 5 // only preprocess
 }
 
 pub fn new() &C.TCCState {
@@ -234,7 +242,7 @@ pub fn (state &C.TCCState) relocate() ? {
 }
 
 pub fn (state &C.TCCState) get_relocation_size() {
-	C.tcc_relocate(state, voidptr(0))
+	C.tcc_relocate(state, unsafe { nil })
 }
 
 pub fn (state &C.TCCState) relocate_to_address(address voidptr) ? {
@@ -245,7 +253,7 @@ pub fn (state &C.TCCState) relocate_to_address(address voidptr) ? {
 
 pub fn (state &C.TCCState) get_symbol(name string) ?voidptr {
 	symbol := C.tcc_get_symbol(state, &char(name.str))
-	if symbol == voidptr(0) {
+	if symbol == unsafe { nil } {
 		return error('Error getting symbol')
 	}
 	return symbol
