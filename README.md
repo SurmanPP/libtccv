@@ -28,3 +28,9 @@ fn main() {
 }
 ```
 It only works when the compiler used for compilation is in the system path and uses system resources(/usr/lib).
+
+Example:
+v -cc gcc
+or
+v -cc /usr/bin/tcc
+V's tcc does not work *shrug*
