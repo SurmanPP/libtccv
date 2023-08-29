@@ -189,13 +189,13 @@ pub fn (state &C.TCCState) undefine_symbol(sym string) {
 	C.tcc_undefine_symbol(state, &char(sym.str))
 }
 
-pub fn (state &C.TCCState) add_file(filename string) ? {
+pub fn (state &C.TCCState) add_file(filename string) ! {
 	if C.tcc_add_file(state, &char(filename.str)) != 0 {
 		return error('Error adding file')
 	}
 }
 
-pub fn (state &C.TCCState) compile_string(buffer string) ? {
+pub fn (state &C.TCCState) compile_string(buffer string) ! {
 	if C.tcc_compile_string(state, &char(buffer.str)) != 0 {
 		return error('Error compiling string')
 	}
@@ -209,9 +209,9 @@ pub fn (state &C.TCCState) add_library_path(pathname string) {
 	C.tcc_add_library(state, &char(pathname.str))
 }
 
-pub fn (state &C.TCCState) add_library(name string) ? {
+pub fn (state &C.TCCState) add_library(name string) ! {
 	if C.tcc_add_library(state, &char(name.str)) != 0 {
-		return error('Error adding library $name')
+		return error('Error adding library ${name}')
 	}
 }
 
@@ -219,13 +219,13 @@ pub fn (state &C.TCCState) add_symbol(name string, val voidptr) {
 	C.tcc_add_symbol(state, &char(name.str), val)
 }
 
-pub fn (state &C.TCCState) output_file(name string) ? {
+pub fn (state &C.TCCState) output_file(name string) ! {
 	if C.tcc_output_file(state, &char(name.str)) != 0 {
-		return error('Error setting output file to $name')
+		return error('Error setting output file to ${name}')
 	}
 }
 
-[deprecated: 'Does not work! Use get_symbol() instead']
+// run link and run main() function and return its value. DO NOT call tcc_relocate() before.
 pub fn (state &C.TCCState) run(argv []string) int {
 	mut argvc := []&char{cap: argv.len}
 	for arg in argv {
@@ -234,7 +234,7 @@ pub fn (state &C.TCCState) run(argv []string) int {
 	return C.tcc_run(state, argv.len, argvc.data)
 }
 
-pub fn (state &C.TCCState) relocate() ? {
+pub fn (state &C.TCCState) relocate() ! {
 	if C.tcc_relocate(state, voidptr(1)) != 0 {
 		println(C.tcc_relocate(state, voidptr(1)))
 		return error('Error relocating automatically')
@@ -245,13 +245,13 @@ pub fn (state &C.TCCState) get_relocation_size() {
 	C.tcc_relocate(state, unsafe { nil })
 }
 
-pub fn (state &C.TCCState) relocate_to_address(address voidptr) ? {
+pub fn (state &C.TCCState) relocate_to_address(address voidptr) ! {
 	if C.tcc_relocate(state, address) != 0 {
 		return error('Error relocating to adress')
 	}
 }
 
-pub fn (state &C.TCCState) get_symbol(name string) ?voidptr {
+pub fn (state &C.TCCState) get_symbol(name string) !voidptr {
 	symbol := C.tcc_get_symbol(state, &char(name.str))
 	if symbol == unsafe { nil } {
 		return error('Error getting symbol')
@@ -262,14 +262,13 @@ pub fn (state &C.TCCState) get_symbol(name string) ?voidptr {
 type VoidMap = &map[string]voidptr
 
 pub fn (state &C.TCCState) list_symbols() map[string]voidptr {
-	mut ret := &map[string]voidptr{}
-	C.tcc_list_symbols(state, voidptr(ret), fn (ctx voidptr, name &char, val voidptr) {
-		mut ret := VoidMap(ctx)
+	mut ret := map[string]voidptr{}
+	C.tcc_list_symbols(state, voidptr(&ret), fn (ctx &map[string]voidptr, name &char, val voidptr) {
 		unsafe {
-			ret[cstring_to_vstring(name)] = val
+			ctx[cstring_to_vstring(name)] = val
 		}
 	})
-	return *ret
+	return ret
 }
 
 [inline]
