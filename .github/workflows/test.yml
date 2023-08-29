@@ -8,6 +8,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup V
-        uses: vlang/setup-v@1.3
+        uses: vlang/setup-v@v1.3
       - name: Run Tests
         run: v test .
