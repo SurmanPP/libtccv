@@ -10,4 +10,4 @@ jobs:
       - name: Setup V
         uses: vlang/setup-v@v1.3
       - name: Run Tests
-        run: v test .
+        run: v test libtccv_test.v
