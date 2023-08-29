@@ -3,7 +3,7 @@ run-name: ${{ github.actor }} is testing the code
 on: [push,pull_request,workflow_dispatch]
 jobs: 
   run-tests:
-    runs-on: linux
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
